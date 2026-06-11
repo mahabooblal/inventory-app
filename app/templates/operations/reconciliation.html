@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>Reconciliation Dashboard</h1>
+    <p>Detect and resolve inventory mismatches across stock, warehouse balances, and movement ledgers.</p>
+  </div>
+  <div class="page-heading-actions">
+    <a class="btn btn-outline-primary btn-sm" href="{{ url_for('operations.reconciliation', download='csv', only_mismatch='1' if only_mismatch else '0') }}">
+      <i class="bi bi-download"></i> Download CSV
+    </a>
+    <form class="d-inline" method="post" action="{{ url_for('operations.reconciliation_bootstrap') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-primary btn-sm" type="submit">
+        <i class="bi bi-hammer"></i> Bootstrap Missing Balances
+      </button>
+    </form>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4 col-xl-2">
+    <div class="card kpi-card p-3 h-100">
+      <small class="kpi-label">Products Scanned</small>
+      <div class="kpi-value">{{ total_products }}</div>
+    </div>
+  </div>
+  <div class="col-md-4 col-xl-2">
+    <div class="card kpi-card p-3 h-100">
+      <small class="kpi-label">Reconciliation Issues</small>
+      <div class="kpi-value">{{ mismatch_count }}</div>
+    </div>
+  </div>
+  <div class="col-md-4 col-xl-2">
+    <div class="card kpi-card p-3 h-100">
+      <small class="kpi-label">Warehouse Mismatches</small>
+      <div class="kpi-value">{{ warehouse_mismatch_count }}</div>
+    </div>
+  </div>
+  <div class="col-md-4 col-xl-2">
+    <div class="card kpi-card p-3 h-100">
+      <small class="kpi-label">Ledger Mismatches</small>
+      <div class="kpi-value">{{ ledger_mismatch_count }}</div>
+    </div>
+  </div>
+  <div class="col-md-4 col-xl-2">
+    <div class="card kpi-card p-3 h-100">
+      <small class="kpi-label">Pending Bootstraps</small>
+      <div class="kpi-value">{{ pending_balances }}</div>
+    </div>
+  </div>
+</div>
+
+<div class="content-panel mb-4 p-3">
+  <div class="d-flex flex-wrap gap-2 align-items-center justify-content-between">
+    <div>
+      <a class="btn btn-sm btn-outline-secondary {% if only_mismatch %}active{% endif %}" href="{{ url_for('operations.reconciliation', only_mismatch=1) }}">Show only mismatches</a>
+      <a class="btn btn-sm btn-outline-secondary {% if not only_mismatch %}active{% endif %}" href="{{ url_for('operations.reconciliation', only_mismatch=0) }}">Show all products</a>
+    </div>
+    <div class="small text-muted">Showing {{ statuses|length }} {{ 'product' if statuses|length == 1 else 'products' }}.</div>
+  </div>
+</div>
+
+<div class="content-panel">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>SKU</th>
+          <th>Product Qty</th>
+          <th>Warehouse Total</th>
+          <th>Ledger Net</th>
+          <th>Warehouse Diff</th>
+          <th>Ledger Diff</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for status in statuses %}
+        <tr>
+          <td><strong>{{ status.product_name }}</strong></td>
+          <td>{{ status.product_sku }}</td>
+          <td>{{ status.product_quantity }}</td>
+          <td>{{ status.warehouse_total }}</td>
+          <td>{{ status.ledger_net }}</td>
+          <td>{{ status.difference_warehouse }}</td>
+          <td>{{ status.difference_ledger }}</td>
+          <td>
+            {% if status.warehouse_mismatch and status.ledger_mismatch %}
+            <span class="badge text-bg-danger">Warehouse + Ledger</span>
+            {% elif status.warehouse_mismatch %}
+            <span class="badge text-bg-warning">Warehouse mismatch</span>
+            {% elif status.ledger_mismatch %}
+            <span class="badge text-bg-warning">Ledger mismatch</span>
+            {% else %}
+            <span class="badge text-bg-success">Balanced</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="8" class="text-center py-4 text-muted">No reconciliation issues were found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

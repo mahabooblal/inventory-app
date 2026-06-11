@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>{{ purchase_order.po_number }}</h1>
+    <p>{{ purchase_order.supplier.name }} &bull; {% if purchase_order.status == 'draft' %}<span class="badge bg-secondary">Draft</span>{% elif purchase_order.status == 'pending' %}<span class="badge bg-warning">Pending Approval</span>{% elif purchase_order.status == 'ordered' %}<span class="badge bg-info">Ordered</span>{% elif purchase_order.status == 'partially_received' %}<span class="badge bg-primary">Partially Received</span>{% elif purchase_order.status == 'received' %}<span class="badge bg-success">Received</span>{% elif purchase_order.status == 'rejected' %}<span class="badge bg-danger">Rejected</span>{% elif purchase_order.status == 'cancelled' %}<span class="badge bg-secondary">Cancelled</span>{% endif %}</p>
+  </div>
+  <div class="page-heading-actions">
+    {% if purchase_order.status == 'draft' %}
+    <form method="post" action="{{ url_for('purchase_orders.submit', purchase_order_id=purchase_order.id) }}" style="display: inline;">
+      <button type="submit" class="btn btn-primary btn-sm" onclick="return confirm('Submit this purchase order for approval?')">Submit for Approval</button>
+    </form>
+    {% endif %}
+    {% if purchase_order.status == 'pending' and current_user.is_admin() %}
+    <form method="post" action="{{ url_for('purchase_orders.approve', purchase_order_id=purchase_order.id) }}" style="display: inline;">
+      <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Approve this purchase order?')">Approve</button>
+    </form>
+    <form method="post" action="{{ url_for('purchase_orders.reject', purchase_order_id=purchase_order.id) }}" style="display: inline;">
+      <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Reject this purchase order?')">Reject</button>
+    </form>
+    {% endif %}
+    {% if purchase_order.status in ['draft', 'pending'] and (purchase_order.created_by == current_user.id or current_user.is_admin()) %}
+    <form method="post" action="{{ url_for('purchase_orders.cancel', purchase_order_id=purchase_order.id) }}" style="display: inline;">
+      <button type="submit" class="btn btn-secondary btn-sm" onclick="return confirm('Cancel this purchase order?')">Cancel</button>
+    </form>
+    {% endif %}
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('purchase_orders.list_purchase_orders') }}">Back</a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-xl-8">
+    <div class="content-panel">
+      <h2 class="h5 mb-3">Items</h2>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead><tr><th>Product</th><th>Ordered</th><th>Received</th><th>Remaining</th><th>Unit Cost</th></tr></thead>
+          <tbody>
+            {% for item in purchase_order.items %}
+            <tr>
+              <td><strong>{{ item.product.name }}</strong><div class="small text-muted">{{ item.product.sku }}</div></td>
+              <td>{{ item.quantity_ordered }}</td>
+              <td>{{ item.quantity_received }}</td>
+              <td>{{ item.remaining_quantity }}</td>
+              <td>{{ item.unit_cost|money }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    {% set timeline_title = 'Operation Timeline / Audit Trail' %}
+    {% include '_operation_timeline.html' %}
+
+  </div>
+  <div class="col-xl-4">
+    <div class="content-panel sticky-preview">
+      <h2 class="h5 mb-3">Receive Stock</h2>
+      {% if purchase_order.status in ['ordered', 'partially_received'] %}
+      <form method="post" action="{{ url_for('purchase_orders.receive', purchase_order_id=purchase_order.id) }}">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+          {{ form.batch_reference.label(class="form-label") }}
+          {{ form.batch_reference(class="form-control", placeholder=purchase_order.po_number) }}
+        </div>
+        {% for item in purchase_order.items %}
+        {% if item.remaining_quantity > 0 %}
+        <div class="mb-3">
+          <label class="form-label" for="receive_qty_{{ item.id }}">{{ item.product.name }} remaining {{ item.remaining_quantity }}</label>
+          <input class="form-control" id="receive_qty_{{ item.id }}" name="receive_qty_{{ item.id }}" type="number" min="0" max="{{ item.remaining_quantity }}" value="0">
+        </div>
+        {% endif %}
+        {% endfor %}
+        {{ form.submit(class="btn btn-primary w-100") }}
+      </form>
+      {% else %}
+      <p class="text-muted mb-0">This purchase order is closed for receiving.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

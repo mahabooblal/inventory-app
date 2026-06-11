@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>Inventory Dashboard</h1>
+    <p>Live stock health, daily movement, and replenishment signals.</p>
+  </div>
+  <div class="page-heading-actions">
+    <a class="btn btn-outline-primary btn-sm" href="{{ url_for('stock.stock_in') }}"><i class="bi bi-box-arrow-in-down"></i> Receive</a>
+    <a class="btn btn-primary btn-sm" href="{{ url_for('sales.create_sale') }}"><i class="bi bi-box-arrow-up"></i> Dispatch</a>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  {% set cards = [
+    ('Total Products', stats.total_products, 'bi-box-seam', 'primary'),
+    ('Total Stock Quantity', stats.total_stock_quantity, 'bi-stack', 'info'),
+    ('Incoming Today', stats.incoming_today, 'bi-arrow-down-circle', 'success'),
+    ('Outgoing Today', stats.outgoing_today, 'bi-arrow-up-circle', 'warning'),
+    ('Pending Approvals', stats.approval_pending_count, 'bi-clock', 'warning'),
+    ('Escalated Approvals', stats.escalated_pending_count, 'bi-exclamation-circle', 'danger'),
+    ('Low Stock Items', stats.low_stock_count, 'bi-exclamation-triangle', 'danger'),
+    ('Out of Stock Items', stats.out_of_stock_count, 'bi-x-octagon', 'danger'),
+    ('Reconciliation Alerts', stats.reconciliation_issues, 'bi-shield-lock', 'warning')
+  ] %}
+  {% for label, value, icon, tone in cards %}
+  <div class="col-6 col-xl-3">
+    <div class="card kpi-card kpi-{{ tone }} p-3 h-100">
+      <div class="d-flex justify-content-between align-items-start">
+        <div>
+          <small class="kpi-label">{{ label }}</small>
+          <div class="kpi-value">{{ value }}</div>
+        </div>
+        <span class="kpi-icon"><i class="bi {{ icon }}"></i></span>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<div class="row g-4">
+  <div class="col-xl-9">
+    <div class="row g-4">
+      <div class="col-lg-8">
+        <div class="card chart-card p-3 position-relative chart-loading" data-chart="movementChart">
+          <div class="chart-overlay" aria-hidden="true"><div class="app-spinner"></div><div class="chart-overlay-text">Loading movement...</div></div>
+          <h5 class="mb-3">Inventory Movement</h5>
+          <canvas id="movementChart" height="125"></canvas>
+        </div>
+      </div>
+      <div class="col-lg-4">
+        <div class="card chart-card p-3 position-relative chart-loading h-100" data-chart="categoryChart">
+          <div class="chart-overlay" aria-hidden="true"><div class="app-spinner"></div><div class="chart-overlay-text">Loading categories...</div></div>
+          <h5 class="mb-3">Category Distribution</h5>
+          <canvas id="categoryChart" height="210"></canvas>
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="card chart-card p-3 position-relative chart-loading" data-chart="stockTrendChart">
+          <div class="chart-overlay" aria-hidden="true"><div class="app-spinner"></div><div class="chart-overlay-text">Loading trend...</div></div>
+          <h5 class="mb-3">Monthly Stock Trend</h5>
+          <canvas id="stockTrendChart" height="95"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="content-panel mt-4">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="h5 mb-0">Current Stock Levels</h2>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('products.list_products') }}">View all</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Category</th>
+              <th>Available Qty</th>
+              <th>Min Alert Level</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for product in current_stock_levels %}
+            <tr>
+              <td><strong>{{ product.name }}</strong><div class="small text-muted">{{ product.sku }}</div></td>
+              <td>{{ product.category.name if product.category else '-' }}</td>
+              <td>{{ product.quantity }}</td>
+              <td>{{ product.low_stock_limit }}</td>
+              <td>
+                {% if product.quantity == 0 %}
+                <span class="badge text-bg-danger">Out of Stock</span>
+                {% elif product.is_low_stock %}
+                <span class="badge text-bg-warning">Low Stock</span>
+                {% else %}
+                <span class="badge text-bg-success">Healthy</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center py-4 text-muted">No products found.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-3">
+    <div class="content-panel daily-snapshot mb-4">
+      <h2 class="h5">Daily Snapshot</h2>
+      <div class="snapshot-row"><span>Low stock count</span><strong>{{ stats.low_stock_count }}</strong></div>
+      <div class="snapshot-row"><span>Pending approvals</span><strong>{{ stats.approval_pending_count }}</strong></div>
+      <div class="snapshot-row"><span>Escalated approvals</span><strong>{{ stats.escalated_pending_count }}</strong></div>
+      <div class="snapshot-row"><span>Total inventory value</span><strong>{{ stats.inventory_value|money }}</strong></div>
+      <div class="snapshot-row"><span>Today activity</span><strong>{{ stats.today_activity_count }}</strong></div>
+    </div>
+
+    <div class="content-panel">
+      <h2 class="h5 mb-3">Recent Movement</h2>
+      <div class="movement-list">
+        {% for entry in recent_stock_in %}
+        <div class="movement-item incoming">
+          <span class="movement-icon"><i class="bi bi-arrow-down"></i></span>
+          <div><strong>{{ entry.product.name }}</strong><div class="small text-muted">+{{ entry.quantity }} · {{ entry.created_at.strftime('%d %b %H:%M') }}</div></div>
+        </div>
+        {% endfor %}
+        {% for sale in recent_stock_out %}
+        <div class="movement-item outgoing">
+          <span class="movement-icon"><i class="bi bi-arrow-up"></i></span>
+          <div><strong>{{ sale.product.name }}</strong><div class="small text-muted">-{{ sale.quantity }} · {{ sale.sale_date.strftime('%d %b %H:%M') }}</div></div>
+        </div>
+        {% endfor %}
+        {% if not recent_stock_in and not recent_stock_out %}
+        <p class="text-muted mb-0">No movement yet.</p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.3.0/dist/chart.umd.min.js"></script>
+<script>
+  const chartData = {{ chart_data | tojson | safe }};
+</script>
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+{% endblock %}

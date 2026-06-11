@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading"><div><h1>Expiry Alerts</h1><p>Batches expiring within the next 30 days.</p></div></div>
+<div class="content-panel"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>Product</th><th>Supplier</th><th>Batch</th><th>Qty</th><th>Expires On</th></tr></thead><tbody>{% for batch in batches %}<tr><td>{{ batch.product.name }}</td><td>{{ batch.supplier.name if batch.supplier else '-' }}</td><td>{{ batch.batch_reference or '-' }}</td><td>{{ batch.quantity }}</td><td><span class="badge text-bg-warning">{{ batch.expires_on.strftime('%d-%m-%Y') }}</span></td></tr>{% else %}<tr><td colspan="5" class="text-center py-4">No batches expiring soon.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

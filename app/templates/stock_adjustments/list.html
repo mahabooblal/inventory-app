@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>Stock Adjustments</h1>
+    <p>Record damaged, lost, expired, found, or corrected stock with approval history.</p>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-xl-5">
+    <div class="content-panel form-panel">
+      <h2 class="h5 mb-3">Request Adjustment</h2>
+      <form method="post">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+          {{ form.product_id.label(class="form-label") }}
+          {{ form.product_id(class="form-select") }}
+        </div>
+        <div class="mb-3">
+          {{ form.adjustment_type.label(class="form-label") }}
+          {{ form.adjustment_type(class="form-select") }}
+        </div>
+        <div class="mb-3">
+          {{ form.quantity_delta.label(class="form-label") }}
+          {{ form.quantity_delta(class="form-control", placeholder="-2 for loss, 5 for found stock") }}
+        </div>
+        <div class="mb-3">
+          {{ form.reason.label(class="form-label") }}
+          {{ form.reason(class="form-control", rows="3") }}
+        </div>
+        {{ form.submit(class="btn btn-primary") }}
+      </form>
+    </div>
+  </div>
+  <div class="col-xl-7">
+    <div class="content-panel">
+      <h2 class="h5 mb-3">Adjustment History</h2>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead><tr><th>Date</th><th>Product</th><th>Type</th><th>Delta</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+          <tbody>
+            {% for adjustment in adjustments %}
+            <tr>
+              <td><a href="{{ url_for('stock_adjustments.detail', adjustment_id=adjustment.id) }}">{{ adjustment.created_at.strftime('%d-%m-%Y') }}</a></td>
+              <td><strong>{{ adjustment.product.name }}</strong><div class="small text-muted">{{ adjustment.reason }}</div></td>
+              <td>{{ adjustment.adjustment_type.title() }}</td>
+              <td><span class="badge {{ 'text-bg-success' if adjustment.quantity_delta > 0 else 'text-bg-danger' }}">{{ adjustment.quantity_delta }}</span></td>
+              <td><span class="badge text-bg-{{ 'success' if adjustment.status == 'approved' else 'danger' if adjustment.status == 'rejected' else 'warning' }}">{{ adjustment.status.title() }}</span></td>
+              <td class="text-end">
+                {% if current_user.is_admin() and adjustment.status == 'pending' %}
+                <form class="d-inline" method="post" action="{{ url_for('stock_adjustments.approve', adjustment_id=adjustment.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-sm btn-outline-success" type="submit">Approve</button>
+                </form>
+                <form class="d-inline" method="post" action="{{ url_for('stock_adjustments.reject', adjustment_id=adjustment.id) }}">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-sm btn-outline-danger" type="submit">Reject</button>
+                </form>
+                {% endif %}
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-center py-4">No adjustments yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

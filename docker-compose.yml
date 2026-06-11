@@ -1,0 +1,28 @@
+version: "3.8"
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=sqlite:///instance/app.db
+    volumes:
+      - .:/app
+  backup:
+    image: python:3.14-slim
+    volumes:
+      - ./backups:/backups
+      - ./scripts:/scripts:ro
+    environment:
+      - DATABASE_URL=${DATABASE_URL:-sqlite:///instance/app.db}
+      - DB_TYPE=${DB_TYPE:-sqlite}
+      - BACKUP_DIR=/backups
+      - BACKUP_RETENTION_DAYS=${BACKUP_RETENTION_DAYS:-7}
+      - BACKUP_COMPRESS=${BACKUP_COMPRESS:-1}
+    entrypoint: ["/bin/sh", "-c"]
+    command: |
+      "echo '0 2 * * * python /scripts/backup.py >> /backups/backup.log 2>&1' > /etc/cron.d/db-backup && \
+      chmod 0644 /etc/cron.d/db-backup && \
+      crontab /etc/cron.d/db-backup && \
+      cron -f"

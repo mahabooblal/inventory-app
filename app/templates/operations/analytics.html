@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading"><div><h1>Executive Analytics</h1><p>Business KPIs, dead stock, procurement, returns, and supplier performance.</p></div></div>
+<div class="row g-3 mb-4">
+  {% for label, value in [('Revenue 30d', kpis.revenue|money), ('Units Sold 30d', kpis.units_sold), ('Inventory Cost Value', kpis.inventory_value|money), ('Low Stock Items', kpis.low_stock), ('Returns 30d', kpis.returns), ('Open POs', kpis.open_pos), ('Dead Stock Items', kpis.dead_stock)] %}
+  <div class="col-6 col-xl-3"><div class="card kpi-card p-3 h-100"><small class="kpi-label">{{ label }}</small><div class="kpi-value">{{ value }}</div></div></div>
+  {% endfor %}
+</div>
+<div class="content-panel"><h2 class="h5 mb-3">Supplier Performance</h2><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>Supplier</th><th>Received Qty</th><th>PO Count</th></tr></thead><tbody>{% for row in suppliers %}<tr><td>{{ row.name }}</td><td>{{ row.received_qty }}</td><td>{{ row.po_count }}</td></tr>{% else %}<tr><td colspan="3" class="text-center py-4">No supplier activity yet.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

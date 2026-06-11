@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>Outgoing Stock</h1>
+    <p>Dispatch stock to customers or destinations without overselling.</p>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-xl-7">
+    <div class="content-panel form-panel">
+      <form method="post" data-stock-preview="outgoing">
+        {{ form.hidden_tag() }}
+        <div class="row g-3">
+          <div class="col-md-6">
+            {{ form.product_id.label(class="form-label") }}
+            {{ form.product_id(class="form-select") }}
+            {% with field=form.product_id %}{% include "_form_errors.html" %}{% endwith %}
+          </div>
+          <div class="col-md-6">
+            {{ form.customer_id.label(class="form-label") }}
+            {{ form.customer_id(class="form-select") }}
+            {% with field=form.customer_id %}{% include "_form_errors.html" %}{% endwith %}
+          </div>
+          <div class="col-md-6">
+            {{ form.quantity.label(class="form-label") }}
+            {{ form.quantity(class="form-control", min="1") }}
+            {% with field=form.quantity %}{% include "_form_errors.html" %}{% endwith %}
+          </div>
+          <div class="col-md-6">
+            {{ form.selling_price.label(class="form-label") }}
+            {{ form.selling_price(class="form-control", min="0", step="0.01") }}
+            {% with field=form.selling_price %}{% include "_form_errors.html" %}{% endwith %}
+          </div>
+          <div class="col-12">
+            {{ form.destination_details.label(class="form-label") }}
+            {{ form.destination_details(class="form-control", rows="3", placeholder="Delivery address, department, job site, or notes") }}
+            {% with field=form.destination_details %}{% include "_form_errors.html" %}{% endwith %}
+          </div>
+        </div>
+        <div id="sale-total-preview" class="alert alert-info mt-3 d-none">
+          <strong>Total: </strong><span id="sale-total-value">INR 0.00</span>
+        </div>
+        <div class="form-actions mt-4">
+          {{ form.submit(class="btn btn-primary", id="outgoing-submit") }}
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-xl-5">
+    <div class="content-panel sticky-preview">
+      <h2 class="h5 mb-3">Validation Summary</h2>
+      <div class="preview-metric"><span>Available stock</span><strong id="outgoing-current">0</strong></div>
+      <div class="preview-metric"><span>Requested quantity</span><strong id="outgoing-qty">0</strong></div>
+      <div class="preview-metric"><span>Remaining quantity</span><strong id="outgoing-remaining">0</strong></div>
+      <div id="outgoing-validation" class="alert alert-info mt-3 mb-0">Select a product and enter quantity.</div>
+    </div>
+  </div>
+</div>
+
+<div class="content-panel mt-4">
+  <h2 class="h5 mb-3">Recent Outgoing Stock</h2>
+  <div class="table-responsive">
+    <table id="sales-table" class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Product</th>
+          <th>Customer</th>
+          <th>Destination</th>
+          <th>Qty</th>
+          <th>Price</th>
+          <th>Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for sale in sales %}
+        <tr>
+          <td>{{ sale.sale_date.strftime('%d-%m-%Y %H:%M') }}</td>
+          <td>{{ sale.product.name }}</td>
+          <td>{{ sale.customer.name if sale.customer else 'Walk-in Customer' }}</td>
+          <td>{{ sale.destination_details or '-' }}</td>
+          <td><span class="badge text-bg-warning">-{{ sale.quantity }}</span></td>
+          <td>{{ sale.selling_price|money }}</td>
+          <td>{{ sale.total_amount|money }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-center py-4">No outgoing entries yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+<script>
+  window.PRODUCT_PRICES = {{ product_prices | tojson }};
+  window.PRODUCT_META = {{ product_meta | tojson }};
+</script>
+{% endblock %}

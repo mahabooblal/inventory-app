@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading"><div><h1>{{ warehouse.name }}</h1><p>{{ warehouse.code }} &bull; Warehouse stock balances.</p></div><div class="page-heading-actions"><a class="btn btn-outline-secondary btn-sm" href="{{ url_for('warehouses.list_warehouses') }}">Back</a></div></div>
+<div class="content-panel"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>Product</th><th>SKU</th><th>Quantity</th></tr></thead><tbody>{% for balance in balances %}<tr><td>{{ balance.product.name }}</td><td>{{ balance.product.sku }}</td><td>{{ balance.quantity }}</td></tr>{% else %}<tr><td colspan="3" class="text-center py-4">No warehouse balances yet. Transfers will initialize balances.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

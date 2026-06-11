@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>Sales</h1>
+    <p>All recorded sales.</p>
+  </div>
+</div>
+<div class="content-panel">
+  <table id="sales-table" class="table table-hover align-middle">
+    <thead>
+      <tr>
+        <th data-sort="date">Date</th>
+        <th data-sort="product">Product</th>
+        <th data-sort="quantity">Quantity</th>
+        <th>Price</th>
+        <th data-sort="total">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for sale in sales %}
+      <tr>
+        <td>{{ sale.sale_date.strftime('%Y-%m-%d %H:%M') }}</td>
+        <td>{{ sale.product.name }}</td>
+        <td>{{ sale.quantity }}</td>
+        <td>{{ sale.selling_price|money }}</td>
+        <td>{{ sale.total_amount|money }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="text-center py-4">No sales found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

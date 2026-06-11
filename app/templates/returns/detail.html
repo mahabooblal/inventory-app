@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading"><div><h1>{{ return_order.return_number }}</h1><p>{{ return_order.status|title }} &bull; Return Order</p></div><div class="page-heading-actions"><a class="btn btn-outline-secondary btn-sm" href="{{ url_for('returns.list_returns') }}">Back</a></div></div>
+<div class="content-panel"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>Product</th><th>Type</th><th>Quantity</th><th>Status</th><th>Reason</th><th>Requested</th></tr></thead><tbody><tr><td>{{ return_order.product.name }}</td><td>{{ return_order.return_type.title() }}</td><td>{{ return_order.quantity }}</td><td>{{ return_order.status.title() }}</td><td>{{ return_order.reason }}</td><td>{{ return_order.created_at.strftime('%Y-%m-%d %H:%M') if return_order.created_at else 'N/A' }}</td></tr></tbody></table></div></div>
+{% set timeline_title = 'Return Timeline' %}
+{% include '_operation_timeline.html' %}
+{% endblock %}

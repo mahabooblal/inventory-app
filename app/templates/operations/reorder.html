@@ -1,0 +1,5 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading"><div><h1>Reorder Center</h1><p>Low-stock planning and procurement recommendations based on recent sales velocity.</p></div><div class="page-heading-actions"><a class="btn btn-primary btn-sm" href="{{ url_for('purchase_orders.create') }}">Create PO</a></div></div>
+<div class="content-panel"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>Product</th><th>SKU</th><th>Available</th><th>Avg Daily Sales</th><th>Days Left</th><th>Suggested Qty</th></tr></thead><tbody>{% for item in suggestions %}<tr><td>{{ item.name }}</td><td>{{ item.sku }}</td><td>{{ item.quantity }}</td><td>{{ '%.2f'|format(item.avg_daily_sales) }}</td><td>{{ '%.1f'|format(item.days_remaining) }}</td><td><span class="badge text-bg-warning">{{ item.reorder_qty }}</span></td></tr>{% else %}<tr><td colspan="6" class="text-center py-4">No reorder suggestions right now.</td></tr>{% endfor %}</tbody></table></div></div>
+{% endblock %}

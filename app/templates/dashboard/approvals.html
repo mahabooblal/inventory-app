@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex align-items-start justify-content-between mb-4">
+  <div>
+    <h1 class="h3">Approval Center</h1>
+    <p class="text-muted mb-0">Review pending inventory requests and approve or reject items from a single dashboard.</p>
+  </div>
+</div>
+
+<div class="row gy-4">
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header">
+        <h2 class="h5 mb-0">Pending Stock Adjustments</h2>
+      </div>
+      <div class="card-body p-0">
+        {% if pending_adjustments %}
+        <form method="post" action="{{ url_for('dashboard.approvals_bulk_action') }}">
+          <input type="hidden" name="workflow" value="stock_adjustments">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th><input type="checkbox" onclick="document.querySelectorAll('.adjustment-select').forEach(el => el.checked = this.checked)"></th>
+                  <th>ID</th>
+                  <th>Product</th>
+                  <th>Quantity</th>
+                  <th>Age</th>
+                  <th>Reason</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for adjustment in pending_adjustments %}
+                <tr>
+                  <td><input class="form-check-input adjustment-select" type="checkbox" name="selected_ids" value="{{ adjustment.id }}"></td>
+                  <td><a href="{{ url_for('stock_adjustments.detail', adjustment_id=adjustment.id) }}">{{ adjustment.id }}</a></td>
+                  <td>{{ adjustment.product.name }}</td>
+                  <td>{{ adjustment.quantity }}</td>
+                  <td>
+                    {{ adjustment.created_at.strftime('%d-%m-%Y') }}
+                    {% if adjustment.escalated %}<span class="badge bg-danger ms-1">Escalated</span>{% endif %}
+                  </td>
+                  <td>{{ adjustment.reason or 'N/A' }}</td>
+                  <td class="text-end">
+                    {% if current_user.is_admin() %}
+                    <form method="post" action="{{ url_for('stock_adjustments.approve', adjustment_id=adjustment.id) }}" class="d-inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-sm btn-success me-1">Approve</button>
+                    </form>
+                    <form method="post" action="{{ url_for('stock_adjustments.reject', adjustment_id=adjustment.id) }}" class="d-inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                    </form>
+                    {% else %}
+                    <span class="badge bg-secondary">Admin only</span>
+                    {% endif %}
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="p-3 border-top text-end">
+            <button type="submit" name="action" value="approve" class="btn btn-sm btn-success me-2">Approve Selected</button>
+            <button type="submit" name="action" value="reject" class="btn btn-sm btn-danger">Reject Selected</button>
+          </div>
+        </form>
+        {% else %}
+        <div class="p-4 text-center text-muted">No pending stock adjustments.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header">
+        <h2 class="h5 mb-0">Pending Warehouse Transfers</h2>
+      </div>
+      <div class="card-body p-0">
+        {% if pending_transfers %}
+        <form method="post" action="{{ url_for('dashboard.approvals_bulk_action') }}">
+          <input type="hidden" name="workflow" value="stock_transfers">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th><input type="checkbox" onclick="document.querySelectorAll('.transfer-select').forEach(el => el.checked = this.checked)"></th>
+                  <th>ID</th>
+                  <th>Product</th>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>Qty</th>
+                  <th>Age</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for transfer in pending_transfers %}
+                <tr>
+                  <td><input class="form-check-input transfer-select" type="checkbox" name="selected_ids" value="{{ transfer.id }}"></td>
+                  <td><a href="{{ url_for('warehouses.transfer_detail', transfer_id=transfer.id) }}">{{ transfer.id }}</a></td>
+                  <td>{{ transfer.product.name }}</td>
+                  <td>{{ transfer.source_warehouse.name }}</td>
+                  <td>{{ transfer.destination_warehouse.name }}</td>
+                  <td>{{ transfer.quantity }}</td>
+                  <td>
+                    {{ transfer.created_at.strftime('%d-%m-%Y') }}
+                    {% if transfer.escalated %}<span class="badge bg-danger ms-1">Escalated</span>{% endif %}
+                  </td>
+                  <td class="text-end">
+                    <form method="post" action="{{ url_for('warehouses.approve_transfer', transfer_id=transfer.id) }}" class="d-inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-sm btn-success me-1">Approve</button>
+                    </form>
+                    <form method="post" action="{{ url_for('warehouses.reject_transfer', transfer_id=transfer.id) }}" class="d-inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                    </form>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="p-3 border-top text-end">
+            <button type="submit" name="action" value="approve" class="btn btn-sm btn-success me-2">Approve Selected</button>
+            <button type="submit" name="action" value="reject" class="btn btn-sm btn-danger">Reject Selected</button>
+          </div>
+        </form>
+        {% else %}
+        <div class="p-4 text-center text-muted">No pending warehouse transfers.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header">
+        <h2 class="h5 mb-0">Pending Purchase Orders</h2>
+      </div>
+      <div class="card-body p-0">
+        {% if pending_purchase_orders %}
+        <form method="post" action="{{ url_for('dashboard.approvals_bulk_action') }}">
+          <input type="hidden" name="workflow" value="purchase_orders">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th><input type="checkbox" onclick="document.querySelectorAll('.po-select').forEach(el => el.checked = this.checked)"></th>
+                  <th>ID</th>
+                  <th>Vendor</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th>Age</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for po in pending_purchase_orders %}
+                <tr>
+                  <td><input class="form-check-input po-select" type="checkbox" name="selected_ids" value="{{ po.id }}"></td>
+                  <td><a href="{{ url_for('purchase_orders.detail', purchase_order_id=po.id) }}">{{ po.id }}</a></td>
+                  <td>{{ po.supplier.name }}</td>
+                  <td>${{ '%.2f' | format(po.total_amount or 0) }}</td>
+                  <td>{{ po.status.title() }}</td>
+                  <td>
+                    {{ po.created_at.strftime('%d-%m-%Y') }}
+                    {% if po.escalated %}<span class="badge bg-danger ms-1">Escalated</span>{% endif %}
+                  </td>
+                  <td class="text-end">
+                    <form method="post" action="{{ url_for('purchase_orders.approve', purchase_order_id=po.id) }}" class="d-inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-sm btn-success me-1">Approve</button>
+                    </form>
+                    <form method="post" action="{{ url_for('purchase_orders.reject', purchase_order_id=po.id) }}" class="d-inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                    </form>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="p-3 border-top text-end">
+            <button type="submit" name="action" value="approve" class="btn btn-sm btn-success me-2">Approve Selected</button>
+            <button type="submit" name="action" value="reject" class="btn btn-sm btn-danger">Reject Selected</button>
+          </div>
+        </form>
+        {% else %}
+        <div class="p-4 text-center text-muted">No pending purchase orders.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-header">
+        <h2 class="h5 mb-0">Pending Return Requests</h2>
+      </div>
+      <div class="card-body p-0">
+        {% if pending_returns %}
+        <form method="post" action="{{ url_for('dashboard.approvals_bulk_action') }}">
+          <input type="hidden" name="workflow" value="returns">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead>
+                <tr>
+                  <th><input type="checkbox" onclick="document.querySelectorAll('.return-select').forEach(el => el.checked = this.checked)"></th>
+                  <th>ID</th>
+                  <th>Customer</th>
+                  <th>Product</th>
+                  <th>Quantity</th>
+                  <th>Age</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for return_order in pending_returns %}
+                <tr>
+                  <td><input class="form-check-input return-select" type="checkbox" name="selected_ids" value="{{ return_order.id }}"></td>
+                  <td><a href="{{ url_for('returns.detail', return_order_id=return_order.id) }}">{{ return_order.id }}</a></td>
+                  <td>{{ return_order.customer.name if return_order.customer else 'N/A' }}</td>
+                  <td>{{ return_order.product.name }}</td>
+                  <td>{{ return_order.quantity }}</td>
+                  <td>
+                    {{ return_order.created_at.strftime('%d-%m-%Y') }}
+                    {% if return_order.escalated %}<span class="badge bg-danger ms-1">Escalated</span>{% endif %}
+                  </td>
+                  <td class="text-end">
+                    <form method="post" action="{{ url_for('returns.approve', return_order_id=return_order.id) }}" class="d-inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-sm btn-success me-1">Approve</button>
+                    </form>
+                    <form method="post" action="{{ url_for('returns.reject', return_order_id=return_order.id) }}" class="d-inline">
+                      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                    </form>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          <div class="p-3 border-top text-end">
+            <button type="submit" name="action" value="approve" class="btn btn-sm btn-success me-2">Approve Selected</button>
+            <button type="submit" name="action" value="reject" class="btn btn-sm btn-danger">Reject Selected</button>
+          </div>
+        </form>
+        {% else %}
+        <div class="p-4 text-center text-muted">No pending return requests.</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

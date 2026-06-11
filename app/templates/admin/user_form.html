@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>Create User</h1>
+    <p>Add a new team member.</p>
+  </div>
+</div>
+<div class="content-panel form-panel">
+  <form method="post">
+    {{ form.hidden_tag() }}
+    {% for field in [form.username, form.email, form.password, form.role] %}
+    <div class="mb-3">
+      {{ field.label(class="form-label") }}
+      {% if field.type == 'SelectField' %}
+        {{ field(class="form-select") }}
+      {% else %}
+        {{ field(class="form-control") }}
+      {% endif %}
+      {% include "_form_errors.html" %}
+    </div>
+    {% endfor %}
+    {{ form.submit(class="btn btn-primary") }}
+  </form>
+</div>
+{% endblock %}

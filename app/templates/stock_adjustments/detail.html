@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading"><div><h1>Adjustment #{{ adjustment.id }}</h1><p>{{ adjustment.status|title }} &bull; Stock Adjustment</p></div><div class="page-heading-actions"><a class="btn btn-outline-secondary btn-sm" href="{{ url_for('stock_adjustments.list_adjustments') }}">Back</a></div></div>
+<div class="content-panel"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>Product</th><th>Type</th><th>Quantity</th><th>Status</th><th>Reason</th><th>Requested</th></tr></thead><tbody><tr><td>{{ adjustment.product.name }}</td><td>{{ adjustment.adjustment_type.title() }}</td><td>{{ adjustment.quantity_delta }}</td><td>{{ adjustment.status.title() }}</td><td>{{ adjustment.reason }}</td><td>{{ adjustment.created_at.strftime('%Y-%m-%d %H:%M') if adjustment.created_at else 'N/A' }}</td></tr></tbody></table></div></div>
+{% set timeline_title = 'Adjustment Timeline' %}
+{% include '_operation_timeline.html' %}
+{% endblock %}

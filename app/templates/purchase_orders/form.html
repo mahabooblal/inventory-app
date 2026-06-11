@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>Create Purchase Order</h1>
+    <p>Build a supplier order with multiple products and expected receiving date.</p>
+  </div>
+</div>
+
+<div class="content-panel form-panel">
+  <form method="post">
+    {{ form.hidden_tag() }}
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        {{ form.supplier_id.label(class="form-label") }}
+        {{ form.supplier_id(class="form-select") }}
+      </div>
+      <div class="col-md-4">
+        {{ form.expected_date.label(class="form-label") }}
+        {{ form.expected_date(class="form-control") }}
+      </div>
+      <div class="col-md-4">
+        {{ form.notes.label(class="form-label") }}
+        {{ form.notes(class="form-control", rows="1") }}
+      </div>
+    </div>
+
+    <h2 class="h5 mb-3">Order Items</h2>
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead><tr><th>Product</th><th>Qty</th><th>Unit Cost</th></tr></thead>
+        <tbody>
+          {% for row in range(5) %}
+          <tr>
+            <td>
+              <select class="form-select" name="product_id">
+                <option value="">Choose product</option>
+                {% for product in products %}
+                <option value="{{ product.id }}">{{ product.name }} ({{ product.sku }})</option>
+                {% endfor %}
+              </select>
+            </td>
+            <td><input class="form-control" type="number" name="quantity_ordered" min="0" value="0"></td>
+            <td><input class="form-control" type="number" name="unit_cost" min="0" step="0.01" value="0.00"></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="form-actions mt-4">
+      {{ form.submit(class="btn btn-primary") }}
+      <a class="btn btn-outline-secondary" href="{{ url_for('purchase_orders.list_purchase_orders') }}">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

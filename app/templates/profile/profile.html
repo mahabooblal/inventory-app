@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>My Profile</h1>
+    <p class="text-muted">Manage your account and preferences</p>
+  </div>
+  <div class="page-heading-actions">
+    <a href="{{ url_for('profile.edit_profile') }}" class="btn btn-primary btn-sm">
+      <i class="bi bi-pencil-square"></i> Edit Profile
+    </a>
+    <a href="{{ url_for('profile.settings') }}" class="btn btn-secondary btn-sm">
+      <i class="bi bi-sliders"></i> Preferences
+    </a>
+    <a href="{{ url_for('profile.change_password') }}" class="btn btn-warning btn-sm">
+      <i class="bi bi-shield-lock"></i> Change Password
+    </a>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-6">
+    <div class="content-panel">
+      <div class="panel-header">
+        <h5>Account Information</h5>
+      </div>
+      <div class="panel-body">
+        <div class="row mb-3">
+          <div class="col-sm-4 text-muted">Username:</div>
+          <div class="col-sm-8">
+            <strong>{{ current_user.username }}</strong>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-sm-4 text-muted">Email:</div>
+          <div class="col-sm-8">
+            <strong>{{ current_user.email }}</strong>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-sm-4 text-muted">Phone:</div>
+          <div class="col-sm-8">
+            <strong>{{ current_user.phone or 'Not provided' }}</strong>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-sm-4 text-muted">Role:</div>
+          <div class="col-sm-8">
+            <span class="badge bg-secondary text-uppercase">{{ current_user.role }}</span>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-sm-4 text-muted">Member Since:</div>
+          <div class="col-sm-8">
+            <strong>{{ current_user.created_at.strftime('%B %d, %Y') if current_user.created_at else 'Unknown' }}</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6">
+    <div class="content-panel">
+      <div class="panel-header">
+        <h5>Account Preferences</h5>
+      </div>
+      <div class="panel-body">
+        <div class="row mb-3">
+          <div class="col-sm-4 text-muted">Theme:</div>
+          <div class="col-sm-8">
+            <strong>{{ current_user.preferred_theme|title }}</strong>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-sm-4 text-muted">Dashboard Density:</div>
+          <div class="col-sm-8">
+            <strong>{{ current_user.dashboard_density|title }}</strong>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-sm-4 text-muted">Email Notifications:</div>
+          <div class="col-sm-8">
+            <strong>{% if current_user.email_notifications %}Enabled{% else %}Disabled{% endif %}</strong>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-sm-4 text-muted">Account Status:</div>
+          <div class="col-sm-8">
+            <span class="badge {% if current_user.is_active %}bg-success{% else %}bg-danger{% endif %}">
+              {% if current_user.is_active %}Active{% else %}Inactive{% endif %}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row mt-4">
+  <div class="col-lg-12">
+    <div class="content-panel">
+      <div class="panel-header">
+        <h5>Bio</h5>
+      </div>
+      <div class="panel-body">
+        {% if current_user.bio %}
+          <p>{{ current_user.bio }}</p>
+        {% else %}
+          <p class="text-muted"><em>No bio added yet. <a href="{{ url_for('profile.edit_profile') }}">Add one now.</a></em></p>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

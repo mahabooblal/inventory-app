@@ -1,0 +1,167 @@
+﻿<!doctype html>
+<html lang="en" data-theme="{{ user_theme }}">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ title }} - Inventory Management System</title>
+    {% if current_user.is_authenticated %}
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    {% endif %}
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark app-navbar">
+      <div class="container-fluid px-4">
+        <button class="btn btn-sm btn-outline-light me-3 sidebar-toggle" type="button" aria-label="Toggle sidebar" aria-controls="appSidebar" aria-expanded="true">
+          <i class="bi bi-list"></i>
+        </button>
+        <a class="navbar-brand fw-semibold" href="{{ url_for('dashboard.index') }}">
+          <span class="navbar-brand-mark">◆</span> Inventory MS
+        </a>
+        <div class="navbar-expand d-flex align-items-center ms-auto">
+          {% if current_user.is_authenticated %}
+          <form class="d-flex me-3" method="GET" action="{{ url_for('search.global_search') }}">
+            <input class="form-control form-control-sm me-2 app-search-input" type="search" name="q" placeholder="Search..." aria-label="Search">
+            <button class="btn btn-outline-light btn-sm" type="submit"><i class="bi bi-search"></i></button>
+          </form>
+          <div class="d-flex align-items-center gap-3 text-white-50 app-navbar-user">
+            <div class="dropdown notification-dropdown">
+              <button class="btn btn-sm btn-outline-light position-relative notification-toggle" type="button" id="notificationDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" aria-label="Notifications">
+                <i class="bi bi-bell"></i>
+                <span id="notificationBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger notification-badge d-none">0</span>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end notification-menu" aria-labelledby="notificationDropdown">
+                <div class="notification-menu-header">
+                  <strong>Notifications</strong>
+                  <button id="markAllNotificationsRead" class="btn btn-link btn-sm p-0" type="button">Mark all read</button>
+                </div>
+                <div id="notificationList" class="notification-list">
+                  <div class="notification-empty">No notifications yet.</div>
+                </div>
+              </div>
+            </div>
+            <div class="dropdown profile-nav-dropdown">
+              <form class="d-inline" method="post" action="{{ url_for('profile.theme') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="theme" value="{{ 'light' if user_theme == 'dark' else 'dark' }}">
+                <button class="btn btn-sm btn-outline-light" type="submit" aria-label="Toggle theme">
+                  <i class="bi {{ 'bi-sun' if user_theme == 'dark' else 'bi-moon' }}"></i>
+                </button>
+              </form>
+              <button class="btn btn-sm btn-outline-light profile-nav-toggle" type="button" id="profileDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                <img src="{{ url_for('static', filename='profile_images/' ~ (current_user.profile_image or 'default.svg')) }}" class="profile-nav-avatar" width="28" height="28" alt="{{ current_user.username }} avatar">
+                <span class="app-user-name">{{ current_user.username }}</span>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end profile-nav-menu" aria-labelledby="profileDropdown">
+                <div class="profile-nav-header">
+                  <strong>{{ current_user.username }}</strong>
+                  <span>{{ current_user.email }}</span>
+                  <span class="badge bg-secondary text-uppercase app-role-badge">{{ current_user.role }}</span>
+                </div>
+                <a class="dropdown-item" href="{{ url_for('profile.profile') }}"><i class="bi bi-person-circle"></i> My Profile</a>
+                <a class="dropdown-item" href="{{ url_for('profile.edit_profile') }}"><i class="bi bi-pencil-square"></i> Edit Profile</a>
+                <a class="dropdown-item" href="{{ url_for('profile.settings') }}"><i class="bi bi-sliders"></i> Preferences</a>
+                <a class="dropdown-item" href="{{ url_for('profile.change_password') }}"><i class="bi bi-shield-lock"></i> Change Password</a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item text-danger" href="{{ url_for('auth.logout') }}"><i class="bi bi-box-arrow-right"></i> Logout</a>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </nav>
+
+    <div class="app-shell {% if not current_user.is_authenticated %}app-shell-public{% endif %}">
+      {% if current_user.is_authenticated %}
+      <aside id="appSidebar" class="app-sidebar">
+        <div class="app-sidebar-inner">
+          <div class="app-sidebar-header">
+            <div class="text-uppercase small text-white-50">Navigation</div>
+          </div>
+          <nav class="nav flex-column">
+            <a class="nav-link {% if request.endpoint == 'dashboard.index' %}active{% endif %}" href="{{ url_for('dashboard.index') }}"><i class="bi bi-speedometer2"></i> Dashboard</a>
+            <a class="nav-link {% if request.endpoint and request.endpoint.startswith('products.') and request.endpoint != 'products.price_updates' %}active{% endif %}" href="{{ url_for('products.list_products') }}"><i class="bi bi-box-seam"></i> Products</a>
+            <a class="nav-link {% if request.endpoint == 'stock.stock_in' %}active{% endif %}" href="{{ url_for('stock.stock_in') }}"><i class="bi bi-box-arrow-in-down"></i> Incoming Stock</a>
+            {% if current_user.has_role('admin', 'manager') %}
+            <a class="nav-link {% if request.endpoint and request.endpoint.startswith('purchase_orders.') %}active{% endif %}" href="{{ url_for('purchase_orders.list_purchase_orders') }}"><i class="bi bi-clipboard-check"></i> Purchase Orders</a>
+            <a class="nav-link {% if request.endpoint and request.endpoint.startswith('stock_adjustments.') %}active{% endif %}" href="{{ url_for('stock_adjustments.list_adjustments') }}"><i class="bi bi-sliders2"></i> Adjustments</a>
+            <a class="nav-link {% if request.endpoint == 'dashboard.approvals' %}active{% endif %}" href="{{ url_for('dashboard.approvals') }}"><i class="bi bi-check2-square"></i> Approvals</a>
+            {% endif %}
+            <a class="nav-link {% if request.endpoint == 'sales.create_sale' %}active{% endif %}" href="{{ url_for('sales.create_sale') }}"><i class="bi bi-box-arrow-up"></i> Outgoing Stock</a>
+            <a class="nav-link {% if request.endpoint and request.endpoint.startswith('invoices.') %}active{% endif %}" href="{{ url_for('invoices.list_invoices') }}"><i class="bi bi-receipt"></i> Invoices</a>
+            <a class="nav-link {% if request.endpoint and request.endpoint.startswith('returns.') %}active{% endif %}" href="{{ url_for('returns.list_returns') }}"><i class="bi bi-arrow-counterclockwise"></i> Returns</a>
+            {% if current_user.has_role('admin', 'manager') %}
+            <a class="nav-link {% if request.endpoint and request.endpoint.startswith('warehouses.') %}active{% endif %}" href="{{ url_for('warehouses.list_warehouses') }}"><i class="bi bi-building"></i> Warehouses</a>
+            <a class="nav-link {% if request.endpoint == 'operations.reorder_center' %}active{% endif %}" href="{{ url_for('operations.reorder_center') }}"><i class="bi bi-cart-check"></i> Reorder Center</a>
+            <a class="nav-link {% if request.endpoint == 'operations.analytics' %}active{% endif %}" href="{{ url_for('operations.analytics') }}"><i class="bi bi-graph-up-arrow"></i> Executive Analytics</a>
+            <a class="nav-link {% if request.endpoint == 'operations.reconciliation' %}active{% endif %}" href="{{ url_for('operations.reconciliation') }}"><i class="bi bi-shield-lock"></i> Reconciliation</a>
+            <a class="nav-link {% if request.endpoint == 'operations.expiry_alerts' %}active{% endif %}" href="{{ url_for('operations.expiry_alerts') }}"><i class="bi bi-calendar2-x"></i> Expiry Alerts</a>
+            {% endif %}
+            <a class="nav-link {% if request.endpoint == 'products.price_updates' %}active{% endif %}" href="{{ url_for('products.price_updates') }}"><i class="bi bi-cash-coin"></i> Daily Price</a>
+            <a class="nav-link {% if request.endpoint and request.endpoint.startswith('reports.') %}active{% endif %}" href="{{ url_for('reports.index') }}"><i class="bi bi-file-earmark-bar-graph"></i> Reports</a>
+            <a class="nav-link {% if request.endpoint and request.endpoint.startswith('categories.') %}active{% endif %}" href="{{ url_for('categories.list_categories') }}"><i class="bi bi-tags"></i> Categories</a>
+            <a class="nav-link {% if request.endpoint and request.endpoint.startswith('suppliers.') %}active{% endif %}" href="{{ url_for('suppliers.list_suppliers') }}"><i class="bi bi-truck"></i> Suppliers</a>
+            <a class="nav-link {% if request.endpoint and request.endpoint.startswith('customers.') %}active{% endif %}" href="{{ url_for('customers.list_customers') }}"><i class="bi bi-people"></i> Customers</a>
+            <a class="nav-link {% if request.endpoint == 'profile.profile' %}active{% endif %}" href="{{ url_for('profile.profile') }}"><i class="bi bi-person-circle"></i> Profile</a>
+            <a class="nav-link {% if request.endpoint == 'profile.settings' %}active{% endif %}" href="{{ url_for('profile.settings') }}"><i class="bi bi-sliders"></i> Settings</a>
+            {% if current_user.is_authenticated and current_user.has_role('admin', 'manager') %}
+            <a class="nav-link {% if request.endpoint and request.endpoint.startswith('activity_logs.') %}active{% endif %}" href="{{ url_for('activity_logs.list_logs') }}"><i class="bi bi-clock-history"></i> Activity Logs</a>
+            {% endif %}
+            {% if current_user.is_authenticated and current_user.is_admin() %}
+            <div class="text-uppercase small text-white-50 mt-3 mb-2 px-2">Admin</div>
+            <a class="nav-link {% if request.endpoint and request.endpoint.startswith('admin.') %}active{% endif %}" href="{{ url_for('admin.users') }}"><i class="bi bi-person-gear"></i> Users</a>
+            {% endif %}
+          </nav>
+        </div>
+      </aside>
+      {% endif %}
+
+      <main class="app-main py-4">
+        <div class="container-fluid px-4">
+          <div class="app-toast-area">
+            <div class="toast-container position-fixed top-0 end-0 p-3 app-toast-container" aria-live="polite" aria-atomic="true">
+              {% with messages = get_flashed_messages(with_categories=true) %}
+              {% if messages %}
+                {% for category, message in messages %}
+                  <div class="toast text-bg-{{ category }} border-0 app-toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="3800">
+                    <div class="d-flex">
+                      <div class="toast-body">{{ message }}</div>
+                      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                  </div>
+                {% endfor %}
+              {% endif %}
+              {% endwith %}
+            </div>
+          </div>
+
+          {% block content %}{% endblock %}
+        </div>
+      </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const toastEls = document.querySelectorAll('.app-toast-container .toast');
+        toastEls.forEach(el => new bootstrap.Toast(el).show());
+      });
+    </script>
+    <!-- UI helpers: toasts, sidebar toggle, loading spinner -->
+    <script src="{{ url_for('static', filename='js/ui.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+    <!-- Global loading overlay -->
+    <div id="globalLoader" class="global-loader d-none" aria-hidden="true">
+      <div class="spinner-border text-primary" role="status" aria-hidden="true">
+        <span class="visually-hidden">Loading...</span>
+      </div>
+    </div>
+
+    <!-- Sidebar backdrop for small screens -->
+    <div id="sidebarBackdrop" class="sidebar-backdrop d-none"></div>
+  </body>
+</html>

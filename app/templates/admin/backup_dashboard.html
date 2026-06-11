@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Backup Management Center</h2>
+<div class="row mb-4">
+  <div class="col">
+    <div class="card text-bg-light mb-3">
+      <div class="card-header">Last Backup</div>
+      <div class="card-body"><strong>{{ summary.last_backup or 'Never' }}</strong></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card text-bg-light mb-3">
+      <div class="card-header">Health</div>
+      <div class="card-body"><strong>{{ summary.health|capitalize }}</strong></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card text-bg-light mb-3">
+      <div class="card-header">Total Backups</div>
+      <div class="card-body"><strong>{{ summary.total }}</strong></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card text-bg-light mb-3">
+      <div class="card-header">Storage Used</div>
+      <div class="card-body"><strong>{{ summary.storage|filesizeformat }}</strong></div>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card text-bg-light mb-3">
+      <div class="card-header">Failed Backups</div>
+      <div class="card-body"><strong>{{ summary.failed }}</strong></div>
+    </div>
+  </div>
+</div>
+
+<div class="mb-3">
+  <form method="post" action="{{ url_for('backup_admin.manual_backup') }}" style="display:inline-block">
+    {{ csrf_token() }}
+    <button class="btn btn-primary">Run Backup Now</button>
+  </form>
+</div>
+
+<h3>Backup History</h3>
+<table class="table table-bordered table-hover">
+  <thead>
+    <tr>
+      <th>Timestamp</th>
+      <th>Type</th>
+      <th>Size</th>
+      <th>Checksum</th>
+      <th>Status</th>
+      <th>Expires</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for b in backups %}
+    <tr>
+      <td>{{ b.created_at }}</td>
+      <td>{{ b.database_type }}</td>
+      <td>{{ b.file_size|filesizeformat }}</td>
+      <td style="font-family:monospace">{{ b.checksum or '-' }}</td>
+      <td>{{ b.status }}</td>
+      <td>{{ b.retention_until }}</td>
+      <td>
+        <a href="{{ url_for('backup_admin.download_backup', filename=b.file_name) }}" class="btn btn-sm btn-secondary">Download</a>
+        <form method="post" action="{{ url_for('backup_admin.verify', filename=b.file_name) }}" style="display:inline-block">
+          {{ csrf_token() }}
+          <button class="btn btn-sm btn-info">Verify</button>
+        </form>
+        <form method="post" action="{{ url_for('backup_admin.delete_backup', filename=b.file_name) }}" style="display:inline-block" onsubmit="return confirm('Delete this backup?');">
+          {{ csrf_token() }}
+          <button class="btn btn-sm btn-danger">Delete</button>
+        </form>
+        <form method="post" action="{{ url_for('backup_admin.restore', filename=b.file_name) }}" style="display:inline-block" onsubmit="return confirm('Restore from this backup? This will overwrite the database.');">
+          {{ csrf_token() }}
+          <button class="btn btn-sm btn-warning">Restore</button>
+        </form>
+      </td>
+    </tr>
+    {% else %}
+    <tr>
+      <td colspan="7" class="text-center text-muted">No backups found.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<nav>
+  <ul class="pagination">
+    {% for p in range(1, (total // page_size) + 2) %}
+      <li class="page-item {% if p == page %}active{% endif %}"><a class="page-link" href="?page={{ p }}">{{ p }}</a></li>
+    {% endfor %}
+  </ul>
+</nav>
+{% endblock %}

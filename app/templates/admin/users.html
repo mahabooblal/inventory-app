@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>Users</h1>
+    <p>Create, view, and deactivate application users.</p>
+  </div>
+  <a class="btn btn-primary" href="{{ url_for('admin.new_user') }}">Create User</a>
+</div>
+<div class="content-panel">
+  <table class="table table-hover align-middle">
+    <thead><tr><th>Username</th><th>Email</th><th>Role</th><th>Status</th><th>Created</th><th class="text-end">Actions</th></tr></thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>{{ user.username }}</td>
+        <td>{{ user.email }}</td>
+        <td>
+          <form method="post" action="{{ url_for('admin.update_role', user_id=user.id) }}" class="d-flex gap-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <select class="form-select form-select-sm" name="role">
+              {% for role in ['admin', 'manager', 'staff'] %}
+              <option value="{{ role }}" {% if user.role == role %}selected{% endif %}>{{ role }}</option>
+              {% endfor %}
+            </select>
+            <button class="btn btn-sm btn-outline-primary" type="submit">Save</button>
+          </form>
+        </td>
+        <td><span class="badge text-bg-{{ 'success' if user.is_active else 'secondary' }}">{{ 'Active' if user.is_active else 'Inactive' }}</span></td>
+        <td>{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else '-' }}</td>
+        <td class="text-end">
+          <form method="post" action="{{ url_for('admin.toggle_user', user_id=user.id) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button class="btn btn-sm btn-outline-warning" type="submit" {% if user.id == current_user.id %}disabled{% endif %}>
+              {{ 'Deactivate' if user.is_active else 'Activate' }}
+            </button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

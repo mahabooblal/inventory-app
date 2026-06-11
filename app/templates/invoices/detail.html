@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>{{ invoice.invoice_number }}</h1>
+    <p>{{ invoice.customer.name if invoice.customer else 'Walk-in Customer' }} &bull; {{ invoice.status.replace('_', ' ').title() }}</p>
+  </div>
+  <div class="page-heading-actions">
+    <a class="btn btn-outline-danger btn-sm" href="{{ url_for('invoices.pdf', invoice_id=invoice.id) }}"><i class="bi bi-filetype-pdf"></i> PDF</a>
+    <a class="btn btn-outline-secondary btn-sm" href="{{ url_for('invoices.list_invoices') }}">Back</a>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-xl-8">
+    <div class="content-panel">
+      <h2 class="h5 mb-3">Items</h2>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead><tr><th>Product</th><th>Qty</th><th>Price</th><th>Discount</th><th>GST</th><th>Total</th></tr></thead>
+          <tbody>
+            {% for item in invoice.items %}
+            <tr>
+              <td><strong>{{ item.product.name }}</strong><div class="small text-muted">{{ item.product.sku }}</div></td>
+              <td>{{ item.quantity }}</td>
+              <td>{{ item.unit_price|money }}</td>
+              <td>{{ item.discount_amount|money }}</td>
+              <td>{{ item.tax_amount|money }} <span class="small text-muted">({{ item.tax_rate }}%)</span></td>
+              <td>{{ item.line_total|money }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="content-panel mt-4">
+      <h2 class="h5 mb-3">Payments</h2>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead><tr><th>Date</th><th>Method</th><th>Reference</th><th>Amount</th></tr></thead>
+          <tbody>
+            {% for payment in invoice.payments %}
+            <tr>
+              <td>{{ payment.received_at.strftime('%d-%m-%Y %H:%M') }}</td>
+              <td>{{ payment.method.replace('_', ' ').title() }}</td>
+              <td>{{ payment.reference or '-' }}</td>
+              <td>{{ payment.amount|money }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-center py-4">No payments yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-4">
+    <div class="content-panel sticky-preview mb-4">
+      <h2 class="h5 mb-3">Billing Summary</h2>
+      <div class="preview-metric"><span>Subtotal</span><strong>{{ invoice.subtotal|money }}</strong></div>
+      <div class="preview-metric"><span>Discount</span><strong>{{ invoice.discount_amount|money }}</strong></div>
+      <div class="preview-metric"><span>GST/Tax</span><strong>{{ invoice.tax_amount|money }}</strong></div>
+      <div class="preview-metric"><span>Total</span><strong>{{ invoice.total_amount|money }}</strong></div>
+      <div class="preview-metric"><span>Paid</span><strong>{{ invoice.amount_paid|money }}</strong></div>
+      <div class="preview-metric"><span>Balance</span><strong>{{ invoice.balance_due|money }}</strong></div>
+    </div>
+
+    {% if invoice.balance_due > 0 %}
+    <div class="content-panel">
+      <h2 class="h5 mb-3">Record Payment</h2>
+      <form method="post">
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+          {{ form.amount.label(class="form-label") }}
+          {{ form.amount(class="form-control", min="0.01", step="0.01", max=invoice.balance_due) }}
+        </div>
+        <div class="mb-3">
+          {{ form.method.label(class="form-label") }}
+          {{ form.method(class="form-select") }}
+        </div>
+        <div class="mb-3">
+          {{ form.reference.label(class="form-label") }}
+          {{ form.reference(class="form-control") }}
+        </div>
+        {{ form.submit(class="btn btn-primary w-100") }}
+      </form>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% set timeline_title = 'Invoice Audit Trail' %}
+{% include '_operation_timeline.html' %}
+{% endblock %}

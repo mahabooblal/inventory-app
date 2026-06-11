@@ -1,0 +1,23 @@
+﻿{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading"><h1>{{ title }}</h1></div>
+<div class="content-panel form-panel">
+  <form method="post">
+    {{ form.hidden_tag() }}
+    <div class="mb-3">
+      {{ form.name.label(class="form-label") }}
+      {{ form.name(class="form-control") }}
+      {% with field=form.name %}{% include "_form_errors.html" %}{% endwith %}
+    </div>
+    <div class="mb-3">
+      {{ form.description.label(class="form-label") }}
+      {{ form.description(class="form-control", rows="3") }}
+      {% with field=form.description %}{% include "_form_errors.html" %}{% endwith %}
+    </div>
+    {{ form.submit(class="btn btn-primary") }}
+    <a href="{{ url_for('categories.list_categories') }}" class="btn btn-outline-secondary">Cancel</a>
+  </form>
+</div>
+{% endblock %}
+

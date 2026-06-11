@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>Create Invoice</h1>
+    <p>Bill multiple products with discount, GST/tax, and initial payment.</p>
+  </div>
+</div>
+
+<div class="content-panel form-panel">
+  <form method="post">
+    {{ form.hidden_tag() }}
+    <div class="row g-3 mb-4">
+      <div class="col-md-4">
+        {{ form.customer_id.label(class="form-label") }}
+        {{ form.customer_id(class="form-select") }}
+      </div>
+      <div class="col-md-4">
+        {{ form.payment_amount.label(class="form-label") }}
+        {{ form.payment_amount(class="form-control", min="0", step="0.01") }}
+      </div>
+      <div class="col-md-4">
+        {{ form.payment_method.label(class="form-label") }}
+        {{ form.payment_method(class="form-select") }}
+      </div>
+      <div class="col-12">
+        {{ form.notes.label(class="form-label") }}
+        {{ form.notes(class="form-control", rows="2") }}
+      </div>
+    </div>
+
+    <h2 class="h5 mb-3">Invoice Items</h2>
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead><tr><th>Product</th><th>Qty</th><th>Unit Price</th><th>Discount</th><th>GST %</th></tr></thead>
+        <tbody>
+          {% for row in range(6) %}
+          <tr>
+            <td>
+              <select class="form-select invoice-product-select" name="product_id">
+                <option value="">Choose product</option>
+                {% for product in products %}
+                <option value="{{ product.id }}">{{ product.name }} - Stock {{ product.quantity }}</option>
+                {% endfor %}
+              </select>
+            </td>
+            <td><input class="form-control" type="number" name="quantity" min="0" value="0"></td>
+            <td><input class="form-control" type="number" name="unit_price" min="0" step="0.01" value="0.00"></td>
+            <td><input class="form-control" type="number" name="discount_amount" min="0" step="0.01" value="0.00"></td>
+            <td><input class="form-control" type="number" name="tax_rate" min="0" step="0.01" value="18.00"></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="form-actions mt-4">
+      {{ form.submit(class="btn btn-primary") }}
+      <a class="btn btn-outline-secondary" href="{{ url_for('invoices.list_invoices') }}">Cancel</a>
+    </div>
+  </form>
+</div>
+
+<script>
+  window.INVOICE_PRODUCT_META = {{ product_meta | tojson }};
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.invoice-product-select').forEach((select) => {
+      select.addEventListener('change', () => {
+        const row = select.closest('tr');
+        const priceInput = row.querySelector('input[name="unit_price"]');
+        const product = window.INVOICE_PRODUCT_META[parseInt(select.value, 10)];
+        if (product && priceInput) priceInput.value = Number(product.price || 0).toFixed(2);
+      });
+    });
+  });
+</script>
+{% endblock %}

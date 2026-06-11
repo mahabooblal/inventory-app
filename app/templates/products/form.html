@@ -1,0 +1,85 @@
+﻿{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>{{ title }}</h1>
+    <p>Keep product details accurate so stock and reports stay correct.</p>
+  </div>
+</div>
+
+<div class="content-panel form-panel">
+  <form method="post" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    <div class="row g-3">
+      <div class="col-md-6">
+        {{ form.name.label(class="form-label") }}
+        {{ form.name(class="form-control") }}
+        {% with field=form.name %}{% include "_form_errors.html" %}{% endwith %}
+      </div>
+      <div class="col-md-6">
+        {{ form.sku.label(class="form-label") }}
+        {{ form.sku(class="form-control", placeholder="Leave blank to auto-generate") }}
+        {% with field=form.sku %}{% include "_form_errors.html" %}{% endwith %}
+      </div>
+      <div class="col-md-6">
+        {{ form.barcode.label(class="form-label") }}
+        {{ form.barcode(class="form-control") }}
+        <div class="form-text">Optional. Scan or type the product barcode (EAN-13, UPC-A, etc.)</div>
+        {% with field=form.barcode %}{% include "_form_errors.html" %}{% endwith %}
+      </div>
+      <div class="col-md-3">
+        {{ form.price.label(class="form-label") }}
+        {{ form.price(class="form-control") }}
+        {% with field=form.price %}{% include "_form_errors.html" %}{% endwith %}
+      </div>
+      <div class="col-md-3">
+        {{ form.cost_price.label(class="form-label") }}
+        {{ form.cost_price(class="form-control") }}
+        {% with field=form.cost_price %}{% include "_form_errors.html" %}{% endwith %}
+      </div>
+      <div class="col-md-3">
+        {{ form.quantity.label(class="form-label") }}
+        {{ form.quantity(class="form-control") }}
+        {% with field=form.quantity %}{% include "_form_errors.html" %}{% endwith %}
+      </div>
+      <div class="col-md-3">
+        {{ form.low_stock_limit.label(class="form-label") }}
+        {{ form.low_stock_limit(class="form-control") }}
+        {% with field=form.low_stock_limit %}{% include "_form_errors.html" %}{% endwith %}
+      </div>
+      <div class="col-md-6">
+        {{ form.image.label(class="form-label") }}
+        {{ form.image(class="form-control") }}
+        {% with field=form.image %}{% include "_form_errors.html" %}{% endwith %}
+      </div>
+      <div class="col-md-6 d-flex align-items-end">
+        <div class="form-check form-switch mb-2">
+          {{ form.is_active(class="form-check-input") }}
+          {{ form.is_active.label(class="form-check-label") }}
+        </div>
+      </div>
+      <div class="col-md-6">
+        {{ form.category_id.label(class="form-label") }}
+        {{ form.category_id(class="form-select") }}
+        {% with field=form.category_id %}{% include "_form_errors.html" %}{% endwith %}
+      </div>
+      <div class="col-md-6">
+        {{ form.supplier_id.label(class="form-label") }}
+        {{ form.supplier_id(class="form-select") }}
+        {% with field=form.supplier_id %}{% include "_form_errors.html" %}{% endwith %}
+      </div>
+      <div class="col-12">
+        {{ form.description.label(class="form-label") }}
+        {{ form.description(class="form-control", rows="3") }}
+        {% with field=form.description %}{% include "_form_errors.html" %}{% endwith %}
+      </div>
+    </div>
+    <div class="mt-4">
+      {{ form.submit(class="btn btn-primary") }}
+      <a href="{{ url_for('products.list_products') }}" class="btn btn-outline-secondary">Cancel</a>
+    </div>
+  </form>
+</div>
+{% endblock %}
+

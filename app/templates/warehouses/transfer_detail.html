@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading"><div><h1>{{ transfer.transfer_number }}</h1><p>{{ transfer.status|title }} &bull; Stock Transfer</p></div><div class="page-heading-actions"><a class="btn btn-outline-secondary btn-sm" href="{{ url_for('warehouses.transfers') }}">Back</a></div></div>
+<div class="content-panel"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>Product</th><th>From</th><th>To</th><th>Quantity</th><th>Status</th><th>Requested</th></tr></thead><tbody><tr><td>{{ transfer.product.name }}</td><td>{{ transfer.source_warehouse.name }}</td><td>{{ transfer.destination_warehouse.name }}</td><td>{{ transfer.quantity }}</td><td>{{ transfer.status.title() }}</td><td>{{ transfer.created_at.strftime('%Y-%m-%d %H:%M') if transfer.created_at else 'N/A' }}</td></tr></tbody></table></div></div>
+{% set timeline_title = 'Transfer Timeline' %}
+{% include '_operation_timeline.html' %}
+{% endblock %}

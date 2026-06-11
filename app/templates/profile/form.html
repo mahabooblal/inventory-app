@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>{{ title }}</h1>
+    <p class="text-muted">
+      {% if title == 'Edit Profile' %}
+        Update your profile information
+      {% elif title == 'Change Password' %}
+        Change your password to keep your account secure
+      {% elif title == 'Preferences' %}
+        Customize your account preferences and settings
+      {% else %}
+        Manage your account
+      {% endif %}
+    </p>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8">
+    <div class="content-panel form-panel">
+      {% if form.errors %}
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <h6 class="alert-heading">Please fix the following errors:</h6>
+        <ul class="mb-0">
+          {% for field, errors in form.errors.items() %}
+            {% if field != 'csrf_token' %}
+              <li>{{ field|replace('_', ' ')|title }}: {{ errors|join(', ') }}</li>
+            {% endif %}
+          {% endfor %}
+        </ul>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+      {% endif %}
+
+      <form method="post" novalidate>
+        {{ form.hidden_tag() }}
+        
+        {% for field in form %}
+          {% if field.type not in ['CSRFTokenField', 'SubmitField'] %}
+          <div class="mb-3">
+            {% if field.type == 'BooleanField' %}
+              <div class="form-check">
+                {{ field(class="form-check-input") }}
+                {{ field.label(class="form-check-label") }}
+              </div>
+            {% elif field.type == 'SelectField' %}
+              {{ field.label(class="form-label") }}
+              {{ field(class="form-select" + (" is-invalid" if field.errors else "")) }}
+            {% elif field.type == 'TextAreaField' %}
+              {{ field.label(class="form-label") }}
+              {{ field(class="form-control" + (" is-invalid" if field.errors else ""), rows="5") }}
+            {% else %}
+              {{ field.label(class="form-label") }}
+              {{ field(class="form-control" + (" is-invalid" if field.errors else "")) }}
+            {% endif %}
+            
+            {% if field.errors %}
+              <div class="invalid-feedback d-block">
+                {{ field.errors|join(', ') }}
+              </div>
+            {% endif %}
+            
+            {% if field.description %}
+              <small class="form-text text-muted d-block mt-1">{{ field.description }}</small>
+            {% endif %}
+          </div>
+          {% endif %}
+        {% endfor %}
+
+        <div class="form-actions mt-4">
+          {{ form.submit(class="btn btn-primary") }}
+          <a href="{{ url_for('profile.profile') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="content-panel">
+      <div class="panel-header">
+        <h6>Tips</h6>
+      </div>
+      <div class="panel-body small">
+        {% if title == 'Edit Profile' %}
+          <ul class="mb-0 ps-3">
+            <li>Keep your profile information up to date</li>
+            <li>Phone number is optional</li>
+            <li>Bio can be up to 500 characters</li>
+          </ul>
+        {% elif title == 'Change Password' %}
+          <ul class="mb-0 ps-3">
+            <li>Use a strong password (minimum 8 characters)</li>
+            <li>Mix uppercase, lowercase, numbers, and symbols</li>
+            <li>Never share your password with anyone</li>
+            <li>Change your password regularly</li>
+          </ul>
+        {% elif title == 'Preferences' %}
+          <ul class="mb-0 ps-3">
+            <li>Light theme: Best for bright environments</li>
+            <li>Dark theme: Reduces eye strain in low light</li>
+            <li>System: Follows your device settings</li>
+            <li>Density affects layout spacing</li>
+          </ul>
+        {% else %}
+          <ul class="mb-0 ps-3">
+            <li>All fields are required unless marked as optional</li>
+            <li>Changes are saved immediately</li>
+            <li>You can edit your profile anytime</li>
+          </ul>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

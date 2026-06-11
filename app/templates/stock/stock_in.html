@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>Incoming Stock</h1>
+    <p>Receive supplier stock with batch, date, cost, and validation preview.</p>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-xl-7">
+    <div class="content-panel form-panel">
+      <form method="post" data-stock-preview="incoming">
+        {{ form.hidden_tag() }}
+        <div class="row g-3">
+          <div class="col-md-6">
+            {{ form.supplier_id.label(class="form-label") }}
+            {{ form.supplier_id(class="form-select") }}
+            {% with field=form.supplier_id %}{% include "_form_errors.html" %}{% endwith %}
+          </div>
+          <div class="col-md-6">
+            {{ form.product_id.label(class="form-label") }}
+            {{ form.product_id(class="form-select") }}
+            {% with field=form.product_id %}{% include "_form_errors.html" %}{% endwith %}
+          </div>
+          <div class="col-md-6">
+            {{ form.batch_reference.label(class="form-label") }}
+            {{ form.batch_reference(class="form-control", placeholder="PO / batch reference") }}
+            {% with field=form.batch_reference %}{% include "_form_errors.html" %}{% endwith %}
+          </div>
+          <div class="col-md-6">
+            {{ form.receive_date.label(class="form-label") }}
+            {{ form.receive_date(class="form-control") }}
+            {% with field=form.receive_date %}{% include "_form_errors.html" %}{% endwith %}
+          </div>
+          <div class="col-md-6">
+            {{ form.expires_on.label(class="form-label") }}
+            {{ form.expires_on(class="form-control") }}
+            {% with field=form.expires_on %}{% include "_form_errors.html" %}{% endwith %}
+          </div>
+          <div class="col-md-6">
+            {{ form.quantity.label(class="form-label") }}
+            {{ form.quantity(class="form-control", min="1", max="100000") }}
+            {% with field=form.quantity %}{% include "_form_errors.html" %}{% endwith %}
+          </div>
+          <div class="col-md-6">
+            {{ form.unit_cost.label(class="form-label") }}
+            {{ form.unit_cost(class="form-control", min="0", step="0.01") }}
+            {% with field=form.unit_cost %}{% include "_form_errors.html" %}{% endwith %}
+          </div>
+          <div class="col-12">
+            {{ form.note.label(class="form-label") }}
+            {{ form.note(class="form-control", rows="3") }}
+            {% with field=form.note %}{% include "_form_errors.html" %}{% endwith %}
+          </div>
+        </div>
+        <div class="form-actions mt-4">
+          {{ form.submit(class="btn btn-primary") }}
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-xl-5">
+    <div class="content-panel sticky-preview">
+      <h2 class="h5 mb-3">Live Preview</h2>
+      <div class="preview-metric"><span>Current stock</span><strong id="incoming-current">0</strong></div>
+      <div class="preview-metric"><span>Incoming quantity</span><strong id="incoming-qty">0</strong></div>
+      <div class="preview-metric"><span>Projected stock</span><strong id="incoming-projected">0</strong></div>
+      <div id="incoming-validation" class="alert alert-info mt-3 mb-0">Select a product and enter quantity.</div>
+    </div>
+  </div>
+</div>
+
+<div class="content-panel mt-4">
+  <h2 class="h5 mb-3">Recent Stock Entries</h2>
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Product</th>
+          <th>Supplier</th>
+          <th>Batch</th>
+          <th>Expiry</th>
+          <th>Quantity</th>
+          <th>Unit Cost</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for entry in entries %}
+        <tr>
+          <td>{{ entry.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
+          <td>{{ entry.product.name }}</td>
+          <td>{{ entry.supplier.name if entry.supplier else '-' }}</td>
+          <td>{{ entry.batch_reference or '-' }}</td>
+          <td>{{ entry.expires_on.strftime('%d-%m-%Y') if entry.expires_on else '-' }}</td>
+          <td><span class="badge text-bg-success">+{{ entry.quantity }}</span></td>
+          <td>{{ entry.unit_cost|money }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-center py-4">No stock entries yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  window.PRODUCT_META = {{ product_meta | tojson }};
+</script>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>Daily Price Updates</h1>
+    <p>Manage selling prices, approval notes, and gross margin expectations.</p>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-xl-5">
+    <div class="content-panel form-panel">
+      <form method="post" data-price-update>
+        {{ form.hidden_tag() }}
+        <div class="mb-3">
+          {{ form.product_id.label(class="form-label") }}
+          {{ form.product_id(class="form-select") }}
+        </div>
+        <div class="mb-3">
+          {{ form.current_price.label(class="form-label") }}
+          {{ form.current_price(class="form-control", readonly=True) }}
+        </div>
+        <div class="mb-3">
+          {{ form.new_price.label(class="form-label") }}
+          {{ form.new_price(class="form-control", min="0", step="0.01") }}
+          {% with field=form.new_price %}{% include "_form_errors.html" %}{% endwith %}
+        </div>
+        <div class="mb-3">
+          {{ form.effective_date.label(class="form-label") }}
+          {{ form.effective_date(class="form-control") }}
+          {% with field=form.effective_date %}{% include "_form_errors.html" %}{% endwith %}
+        </div>
+        <div class="mb-3">
+          {{ form.approval_note.label(class="form-label") }}
+          {{ form.approval_note(class="form-control", rows="3") }}
+          {% with field=form.approval_note %}{% include "_form_errors.html" %}{% endwith %}
+        </div>
+        <div class="alert alert-info" id="margin-preview">Expected gross margin: 0.00%</div>
+        {{ form.submit(class="btn btn-primary") }}
+      </form>
+    </div>
+  </div>
+  <div class="col-xl-7">
+    <div class="content-panel">
+      <h2 class="h5 mb-3">Price History</h2>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Product</th>
+              <th>Old Price</th>
+              <th>New Price</th>
+              <th>Margin</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in history %}
+            <tr>
+              <td>{{ row.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
+              <td>{{ row.product.name }}</td>
+              <td>{{ row.old_price|money }}</td>
+              <td>{{ row.new_price|money }}</td>
+              <td>{{ '%.2f'|format(row.margin_percent) }}%</td>
+              <td>{{ row.approval_note or '-' }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="6" class="text-center py-4">No price updates yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.PRODUCT_PRICES = {{ product_prices | tojson }};
+  window.PRODUCT_COSTS = {{ product_costs | tojson }};
+</script>
+{% endblock %}

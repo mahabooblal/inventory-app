@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="page-heading">
+  <div>
+    <h1>Invoices</h1>
+    <p>Multi-line billing with GST, discounts, payments, and stock deduction.</p>
+  </div>
+  <div class="page-heading-actions">
+    <a class="btn btn-primary btn-sm" href="{{ url_for('invoices.create') }}"><i class="bi bi-plus-lg"></i> New Invoice</a>
+  </div>
+</div>
+
+<div class="content-panel mb-3">
+  <form class="row g-2 align-items-end" method="get">
+    <div class="col-md-4">
+      <label class="form-label" for="status">Status</label>
+      <select class="form-select" id="status" name="status">
+        <option value="">All Statuses</option>
+        {% for value, label in [('issued', 'Issued'), ('partially_paid', 'Partially Paid'), ('paid', 'Paid'), ('cancelled', 'Cancelled')] %}
+        <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2"><button class="btn btn-outline-primary w-100" type="submit">Filter</button></div>
+  </form>
+</div>
+
+<div class="content-panel">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead><tr><th>Invoice</th><th>Customer</th><th>Status</th><th>Total</th><th>Paid</th><th>Balance</th><th class="text-end">Action</th></tr></thead>
+      <tbody>
+        {% for invoice in invoices %}
+        <tr>
+          <td><strong>{{ invoice.invoice_number }}</strong><div class="small text-muted">{{ invoice.issued_at.strftime('%d-%m-%Y %H:%M') }}</div></td>
+          <td>{{ invoice.customer.name if invoice.customer else 'Walk-in Customer' }}</td>
+          <td><span class="badge text-bg-{{ 'success' if invoice.status == 'paid' else 'warning' if invoice.status == 'partially_paid' else 'primary' }}">{{ invoice.status.replace('_', ' ').title() }}</span></td>
+          <td>{{ invoice.total_amount|money }}</td>
+          <td>{{ invoice.amount_paid|money }}</td>
+          <td>{{ invoice.balance_due|money }}</td>
+          <td class="text-end"><a class="btn btn-sm btn-outline-primary" href="{{ url_for('invoices.detail', invoice_id=invoice.id) }}">Open</a></td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-center py-4">No invoices yet.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
